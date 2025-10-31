@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intelligent Support Agent - Production Ready</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 1fr 300px;
+        }
+
+        .main-panel {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px 30px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 13px;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 15px;
+            margin-top: 12px;
+            font-size: 12px;
+        }
+
+        .status-item {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 12px;
+            border-radius: 12px;
+        }
+
+        .persona-badge {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .persona-badge.cached {
+            background: rgba(76, 175, 80, 0.3);
+        }
+
+        .examples {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .examples h3 {
+            font-size: 13px;
+            color: #6c757d;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .example-btn {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 13px;
+        }
+
+        .example-btn:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .example-label {
+            font-size: 10px;
+            color: #667eea;
+            font-weight: 700;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .chat-container {
+            height: 450px;
+            overflow-y: auto;
+            padding: 20px;
+            background: #ffffff;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            text-align: right;
+        }
+
+        .message-content {
+            display: inline-block;
+            max-width: 75%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .message.agent .message-content {
+            background: #f1f3f5;
+            color: #212529;
+        }
+
+        .message-meta {
+            font-size: 10px;
+            margin-top: 6px;
+            opacity: 0.7;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .meta-badge {
+            background: rgba(0,0,0,0.08);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .kb-used {
+            font-size: 10px;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            color: #6c757d;
+        }
+
+        .kb-article {
+            background: rgba(102, 126, 234, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin: 0 2px;
+        }
+
+        .escalation-alert {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            animation: pulse 0.5s;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .escalation-alert h4 {
+            color: #856404;
+            margin-bottom: 8px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .escalation-alert p {
+            color: #856404;
+            font-size: 12px;
+            margin: 4px 0;
+        }
+
+        .loading {
+            text-align: left;
+        }
+
+        .loading .message-content {
+            background: #f1f3f5;
+            padding: 12px 20px;
+        }
+
+        .loading-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .loading-dots span {
+            width: 8px;
+            height: 8px;
+            background: #adb5bd;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        .input-container {
+            padding: 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .input-form {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-form input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .input-form input:focus {
+            border-color: #667eea;
+        }
+
+        .input-form button {
+            padding: 12px 28px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .input-form button:hover:not(:disabled) {
+            transform: scale(1.05);
+        }
+
+        .input-form button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .action-btn {
+            padding: 6px 14px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .action-btn:hover {
+            background: #5a6268;
+        }
+
+        .action-btn.primary {
+            background: #667eea;
+        }
+
+        .action-btn.primary:hover {
+            background: #5568d3;
+        }
+
+        /* Metrics Sidebar */
+        .metrics-panel {
+            background: #f8f9fa;
+            border-left: 1px solid #e9ecef;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .metrics-panel h3 {
+            font-size: 14px;
+            color: #495057;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border: 1px solid #e9ecef;
+        }
+
+        .metric-label {
+            font-size: 11px;
+            color: #6c757d;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .metric-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .metric-small {
+            font-size: 11px;
+            color: #6c757d;
+            margin-top: 8px;
+        }
+
+        .distribution-bar {
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .distribution-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #adb5bd;
+            padding: 80px 20px;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            .metrics-panel {
+                border-left: none;
+                border-top: 1px solid #e9ecef;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-panel">
+            <div class="header">
+                <h1>🤖 Intelligent Support Agent</h1>
+                <p>Production-Ready with Smart KB Retrieval • Persona Caching • Metrics Tracking</p>
+                <div class="status-bar">
+                    <div class="status-item">✅ TF-IDF Enabled</div>
+                    <div class="status-item">⚡ Optimized LLM</div>
+                    <div class="status-item">📊 Live Metrics</div>
+                </div>
+                <div class="persona-badge" id="personaBadge" style="display: none;"></div>
+            </div>
+
+            <div class="examples" id="examples">
+                <h3>🎯 Demo Scenarios - Click to Test:</h3>
+                <button class="example-btn" onclick="useExample('How do I implement OAuth2 with your API? I need the token endpoint details and webhook configuration.')">
+                    <span class="example-label">💻 Technical Expert</span>
+                    <span class="example-text">How do I implement OAuth2 with your API? I need webhook details.</span>
+                </button>
+                <button class="example-btn" onclick="useExample('This is absolutely ridiculous! Nothing works and I need this fixed RIGHT NOW!')">
+                    <span class="example-label">😤 Frustrated User</span>
+                    <span class="example-text">This is ridiculous! Nothing works and I need this fixed NOW!</span>
+                </button>
+                <button class="example-btn" onclick="useExample('What is your enterprise pricing model and what ROI can we expect in the first year? Also need security compliance info.')">
+                    <span class="example-label">💼 Business Executive</span>
+                    <span class="example-text">What is your enterprise pricing and ROI? Need compliance info.</span>
+                </button>
+            </div>
+
+            <div class="chat-container" id="chatContainer">
+                <div class="empty-state">
+                    💬 Start a conversation to see the agent in action<br>
+                    <small style="margin-top: 10px; display: block;">Watch persona detection, KB retrieval, and escalation logic work in real-time</small>
+                </div>
+            </div>
+
+            <div class="input-container">
+                <form class="input-form" id="messageForm" onsubmit="sendMessage(event)">
+                    <input
+                        type="text"
+                        id="messageInput"
+                        placeholder="Type your message..."
+                        autocomplete="off"
+                    />
+                    <button type="submit" id="sendBtn">Send</button>
+                </form>
+                <div class="actions">
+                    <button class="action-btn" onclick="resetConversation()">🔄 Reset</button>
+                    <button class="action-btn primary" onclick="refreshMetrics()">📊 Refresh Metrics</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="metrics-panel">
+            <h3>📊 Live Metrics</h3>
+            
+            <div class="metric-card">
+                <div class="metric-label">Total Requests</div>
+                <div class="metric-value" id="totalRequests">0</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-label">Avg Response Time</div>
+                <div class="metric-value" id="avgResponseTime">-</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-label">KB Hit Rate</div>
+                <div class="metric-value" id="kbHitRate">-</div>
+                <div class="distribution-bar">
+                    <div class="distribution-fill" id="kbHitBar" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-label">Escalation Rate</div>
+                <div class="metric-value" id="escalationRate">-</div>
+                <div class="metric-small" id="escalationCount">0 escalations</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-label">Persona Distribution</div>
+                <div class="metric-small" id="personaDistribution">No data yet</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-label">Sentiment Analysis</div>
+                <div class="metric-small" id="sentimentDistribution">No data yet</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const sessionId = 'session_' + Math.random().toString(36).substr(2, 9);
+        let messageCount = 0;
+
+        // Auto-refresh metrics every 5 seconds
+        setInterval(refreshMetrics, 5000);
+
+        function useExample(text) {
+            document.getElementById('messageInput').value = text;
+            document.getElementById('messageInput').focus();
+        }
+
+        function addMessage(role, content, meta = {}) {
+            const chatContainer = document.getElementById('chatContainer');
+            const examples = document.getElementById('examples');
+
+            if (messageCount === 0) {
+                examples.style.display = 'none';
+                chatContainer.innerHTML = '';
+            }
+            messageCount++;
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+
+            let metaHTML = '';
+            if (meta.persona) {
+                const cached = meta.cached ? '💾 Cached' : '🔍 Detected';
+                metaHTML += `<div class="message-meta">
+                    <span class="meta-badge">${cached}</span>
+                    <span class="meta-badge">Persona: ${meta.persona}</span>
+                    <span class="meta-badge">${meta.sentiment} | ${meta.urgency}</span>
+                </div>`;
+            }
+            
+            if (meta.metrics) {
+                metaHTML += `<div class="message-meta">
+                    <span class="meta-badge">⏱️ ${meta.metrics.response_time}s</span>
+                    <span class="meta-badge">📚 ${meta.metrics.kb_articles_found} KB hits</span>
+                </div>`;
+            }
+
+            if (meta.kbUsed && meta.kbUsed.length > 0) {
+                const kbTags = meta.kbUsed.map(kb => `<span class="kb-article">${kb}</span>`).join(' ');
+                metaHTML += `<div class="kb-used">📚 KB Used: ${kbTags}</div>`;
+            }
+
+            messageDiv.innerHTML = `
+                <div class="message-content">
+                    ${content}
+                    ${metaHTML}
+                </div>
+            `;
+
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function addEscalation(reason, context) {
+            const chatContainer = document.getElementById('chatContainer');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'escalation-alert';
+            
+            const sentimentHistory = context.sentiment_history ? 
+                context.sentiment_history.join(' → ') : 'N/A';
+            
+            alertDiv.innerHTML = `
+                <h4>🚨 ESCALATION TRIGGERED</h4>
+                <p><strong>Reason:</strong> ${reason}</p>
+                <p><strong>Persona:</strong> ${context.persona} | <strong>Sentiment:</strong> ${context.sentiment} | <strong>Urgency:</strong> ${context.urgency}</p>
+                <p><strong>Conversation:</strong> ${context.conversation_length} messages</p>
+                <p><strong>Sentiment Trend:</strong> ${sentimentHistory}</p>
+                <p style="margin-top: 8px; font-weight: 600; color: #d39e00;">✅ Context prepared for human agent handoff</p>
+            `;
+            chatContainer.appendChild(alertDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function showLoading() {
+            const chatContainer = document.getElementById('chatContainer');
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'message loading';
+            loadingDiv.id = 'loadingMessage';
+            loadingDiv.innerHTML = `
+                <div class="message-content">
+                    <div class="loading-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            `;
+            chatContainer.appendChild(loadingDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function hideLoading() {
+            const loadingMsg = document.getElementById('loadingMessage');
+            if (loadingMsg) loadingMsg.remove();
+        }
+
+        function updatePersonaBadge(personaData) {
+            const badge = document.getElementById('personaBadge');
+            const personaMap = {
+                'technical_expert': '💻 Technical Expert',
+                'frustrated_user': '😤 Frustrated User',
+                'business_exec': '💼 Business Executive'
+            };
+
+            const cachedText = personaData.cached ? ' [CACHED]' : '';
+            const confidence = Math.round(personaData.confidence * 100);
+            
+            badge.textContent = `${personaMap[personaData.persona]}${cachedText} (${confidence}% confidence)`;
+            badge.className = `persona-badge ${personaData.cached ? 'cached' : ''}`;
+            badge.style.display = 'inline-block';
+        }
+
+        async function sendMessage(event) {
+            event.preventDefault();
+
+            const input = document.getElementById('messageInput');
+            const sendBtn = document.getElementById('sendBtn');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            input.disabled = true;
+            sendBtn.disabled = true;
+
+            addMessage('user', message);
+            input.value = '';
+            showLoading();
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: message,
+                        session_id: sessionId
+                    })
+                });
+
+                const data = await response.json();
+                hideLoading();
+
+                if (data.error) {
+                    addMessage('agent', `❌ Error: ${data.error}`);
+                } else {
+                    updatePersonaBadge(data.persona);
+                    addMessage('agent', data.response, {
+                        persona: data.persona.persona.replace('_', ' '),
+                        cached: data.persona.cached,
+                        sentiment: data.persona.sentiment,
+                        urgency: data.persona.urgency,
+                        kbUsed: data.kb_used,
+                        metrics: data.metrics
+                    });
+
+                    if (data.escalate) {
+                        addEscalation(data.escalation_reason, data.escalation_context);
+                    }
+                }
+
+                refreshMetrics();
+
+            } catch (error) {
+                hideLoading();
+                addMessage('agent', `❌ Error: ${error.message}. Please try again.`);
+            } finally {
+                input.disabled = false;
+                sendBtn.disabled = false;
+                input.focus();
+            }
+        }
+
+        async function refreshMetrics() {
+            try {
+                const response = await fetch('/api/metrics');
+                const metrics = await response.json();
+
+                if (metrics.message) return; // No data yet
+
+                document.getElementById('totalRequests').textContent = metrics.total_requests;
+                document.getElementById('avgResponseTime').textContent = metrics.avg_response_time;
+                document.getElementById('kbHitRate').textContent = metrics.kb_hit_rate;
+                document.getElementById('escalationRate').textContent = metrics.escalation_rate;
+
+                // Update KB hit bar
+                const hitRate = parseFloat(metrics.kb_hit_rate);
+                document.getElementById('kbHitBar').style.width = hitRate + '%';
+
+                // Persona distribution
+                const personaText = Object.entries(metrics.persona_distribution)
+                    .map(([k, v]) => `${k.replace('_', ' ')}: ${v}`)
+                    .join('<br>');
+                document.getElementById('personaDistribution').innerHTML = personaText || 'No data';
+
+                // Sentiment distribution
+                const sentimentText = Object.entries(metrics.sentiment_distribution)
+                    .map(([k, v]) => `${k}: ${v}`)
+                    .join('<br>');
+                document.getElementById('sentimentDistribution').innerHTML = sentimentText || 'No data';
+
+                // Escalation count
+                const escalationCount = metrics.escalation_rate.replace('%', '');
+                document.getElementById('escalationCount').textContent = 
+                    `${Math.round(metrics.total_requests * escalationCount / 100)} escalations`;
+
+            } catch (error) {
+                console.error('Error fetching metrics:', error);
+            }
+        }
+
+        async function resetConversation() {
+            if (!confirm('Are you sure you want to reset the conversation?')) return;
+
+            try {
+                await fetch(`/api/reset/${sessionId}`, { method: 'POST' });
+
+                const chatContainer = document.getElementById('chatContainer');
+                chatContainer.innerHTML = '<div class="empty-state">💬 Start a conversation to see the agent in action<br><small style="margin-top: 10px; display: block;">Watch persona detection, KB retrieval, and escalation logic work in real-time</small></div>';
+                document.getElementById('examples').style.display = 'block';
+                document.getElementById('personaBadge').style.display = 'none';
+                messageCount = 0;
+
+            } catch (error) {
+                alert('Error resetting conversation: ' + error.message);
+            }
+        }
+
+        // Initial metrics load
+        refreshMetrics();
+    </script>
+</body>
+</html>

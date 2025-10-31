@@ -1,0 +1,2 @@
+Build an agent that detects customer persona(techincal expert , frustated user , business exec) retrieves appropriate KB content ,
+adapts response tone to persona and esclates when needed with context handoff
